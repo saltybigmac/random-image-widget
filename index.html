@@ -1,0 +1,277 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Random Image</title>
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: transparent;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+
+    .screen {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #start {
+      flex-direction: column;
+      gap: 20px;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .btn {
+      font-size: 28px;
+      padding: 16px 28px;
+      border-radius: 999px;
+      border: 0;
+      cursor: pointer;
+      background: #000;
+      color: #fff;
+    }
+
+    .btn.secondary {
+      background: #444;
+    }
+
+    #image-screen {
+      display: none;
+      flex-direction: column;
+      gap: 14px;
+      padding: 16px;
+      box-sizing: border-box;
+      width: 100%;
+    }
+
+    .frame {
+      width: min(1200px, 96vw);
+      height: min(72vh, 820px);
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    #img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .controls {
+      width: min(1200px, 96vw);
+      margin: 0 auto;
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .thumbs {
+      width: min(1200px, 96vw);
+      margin: 0 auto;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding-top: 4px;
+    }
+
+    .thumb {
+      width: 56px;
+      height: 56px;
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.06);
+    }
+
+    .thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .thumb.current {
+      outline: 3px solid rgba(0,0,0,0.85);
+      outline-offset: 2px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Start Screen -->
+  <div id="start" class="screen">
+    <button id="startBtn" class="btn">LET’S GHOE</button>
+  </div>
+
+  <!-- Image Screen -->
+  <div id="image-screen" class="screen">
+    <div class="frame">
+      <img id="img" alt="Random image" />
+    </div>
+
+    <div class="controls">
+      <button id="nextBtn" class="btn">NEXT</button>
+      <button id="resetBtn" class="btn secondary">RESET IMAGES</button>
+    </div>
+
+    <div id="thumbs" class="thumbs"></div>
+  </div>
+
+  <script>
+
+                const IMAGES = [
+      "images/1.jpeg",
+      "images/2.jpeg",
+      "images/3.jpeg",
+      "images/4.jpeg",
+      "images/5.jpeg",
+      "images/6.jpeg",
+      "images/7.jpeg",
+      "images/8.jpeg",
+      "images/9.jpeg",
+      "images/10.jpeg",
+      "images/11.jpeg",
+      "images/12.jpeg",
+      "images/13.jpg",
+      "images/14.jpg",
+      "images/15.jpg",
+      "images/16.jpg",
+      "images/17.jpg",
+      "images/18.jpg",
+      "images/19.jpg",
+      "images/20.jpg",
+      "images/21.jpg",
+      "images/22.jpg",
+      "images/23.jpg",
+      "images/24.jpg",
+      "images/25.jpg",
+      "images/26.jpg",
+      "images/27.jpg",
+      "images/28.jpg",
+      "images/29.jpg",
+      "images/30.jpg",
+      "images/31.jpg",
+      "images/32.jpg",
+      "images/33.jpg",
+      "images/34.jpg",
+      "images/35.jpg",
+      "images/36.jpg",
+      "images/37.jpg",
+      "images/38.jpg",
+      "images/39.jpg",
+      "images/40.jpg",
+      "images/41.jpg",
+      "images/42.jpg",
+      "images/43.jpg",
+      "images/44.jpg",
+      "images/45.jpg",
+      "images/46.jpg",
+      "images/47.jpg",
+      "images/48.jpg",
+      "images/49.jpg",
+      "images/50.png",
+      "images/51.png",
+      "images/52.png",
+      "images/53.png",
+      "images/55.png",
+      "images/56.png"
+    ];
+
+    const KEY = "no_repeat_image_deck_v5";
+
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function loadState() {
+      try {
+        const s = JSON.parse(localStorage.getItem(KEY));
+        if (!s || !Array.isArray(s.deck) || typeof s.index !== "number") return null;
+        if (!Array.isArray(s.shown)) return null;
+        if (s.deck.length !== IMAGES.length) return null;
+        return s;
+      } catch {
+        return null;
+      }
+    }
+
+    function saveState(state) {
+      localStorage.setItem(KEY, JSON.stringify(state));
+    }
+
+    function newState() {
+      return { deck: shuffle([...IMAGES]), index: 0, shown: [] };
+    }
+
+    function renderThumbs(state, current) {
+      const el = document.getElementById("thumbs");
+      el.innerHTML = "";
+
+      state.shown.forEach((src) => {
+        const box = document.createElement("div");
+        box.className = "thumb" + (src === current ? " current" : "");
+
+        const img = document.createElement("img");
+        img.src = src;
+        img.alt = "Shown";
+
+        box.appendChild(img);
+        el.appendChild(box);
+      });
+    }
+
+    function nextImage() {
+      let state = loadState() || newState();
+
+      if (state.index >= state.deck.length) {
+        state = newState();
+      }
+
+      const chosen = state.deck[state.index];
+      state.index += 1;
+
+      state.shown.push(chosen);
+      saveState(state);
+
+      document.getElementById("img").src = chosen + "?v=" + Date.now();
+      renderThumbs(state, chosen);
+    }
+
+    function resetAll() {
+      localStorage.removeItem(KEY);
+
+      document.getElementById("img").removeAttribute("src");
+      document.getElementById("thumbs").innerHTML = "";
+
+      document.getElementById("image-screen").style.display = "none";
+      document.getElementById("start").style.display = "flex";
+    }
+
+    document.getElementById("startBtn").addEventListener("click", () => {
+      document.getElementById("start").style.display = "none";
+      document.getElementById("image-screen").style.display = "flex";
+      nextImage();
+    });
+
+    document.getElementById("nextBtn").addEventListener("click", nextImage);
+    document.getElementById("resetBtn").addEventListener("click", resetAll);
+  </script>
+
+</body>
+</html>
